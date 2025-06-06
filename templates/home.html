@@ -1,0 +1,163 @@
+<!-- templates/home.html -->
+{% extends "base.html" %}
+
+{% block title %}G.A.I.A. - Problemas em Aberto{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Problemas em Aberto</h1>
+    {% if session.user_id %}
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{{ url_for('nova_solicitacao') }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Nova Solicitação
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+{% if not session.user_id %}
+<div class="alert alert-warning" role="alert">
+    <i class="fas fa-info-circle"></i>
+    <strong>Bem-vindo ao G.A.I.A.!</strong> 
+    <a href="{{ url_for('login') }}" class="alert-link">Faça login</a> ou 
+    <a href="{{ url_for('cadastro') }}" class="alert-link">cadastre-se</a> 
+    para reportar problemas e ajudar na limpeza urbana.
+</div>
+{% endif %}
+
+<div class="row">
+    {% for problema in problemas %}
+    <div class="col-md-6 col-lg-4 mb-4">
+        <div class="card problema-card h-100">
+            <div class="card-header bg-primary text-white">
+                <span class="badge bg-light text-primary">{{ problema.status.upper() }}</span>
+                <small class="float-end">{{ problema.data_criacao.strftime('%d/%m/%Y') }}</small>
+            </div>
+            
+            <div class="row g-0">
+                <div class="col-4">
+                    {% if problema.foto_base64() %}
+                    <img src="data:image/jpeg;base64,{{ problema.foto_base64() }}" 
+                         class="img-fluid h-100 object-cover" alt="Problema">
+                    {% else %}
+                    <div class="bg-light h-100 d-flex align-items-center justify-content-center">
+                        <i class="fas fa-image text-muted fa-2x"></i>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="col-8">
+                    <div class="card-body p-3">
+                        <h6 class="card-title">
+                            <i class="fas fa-map-marker-alt text-danger"></i>
+                            {{ problema.localizacao }}
+                        </h6>
+                        <p class="card-text small">{{ problema.descricao[:100] }}{% if problema.descricao|length > 100 %}...{% endif %}</p>
+                        <small class="text-muted">
+                            Por: {{ problema.criador.nome }}
+                        </small>
+                    </div>
+                </div>
+            </div>
+            
+            {% if session.user_id and session.user_id != problema.criador_id %}
+            <div class="card-footer bg-transparent">
+                <button type="button" class="btn btn-success btn-sm w-100" 
+                        onclick="mostrarModalSeguranca({{ problema.id }})">
+                    <i class="fas fa-hand-paper"></i> Candidatar-se
+                </button>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% else %}
+    <div class="col-12">
+        <div class="text-center py-5">
+            <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+            <h4>Nenhum problema em aberto!</h4>
+            <p class="text-muted">Que ótima notícia! Não há problemas de limpeza urbana no momento.</p>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Modal de Instruções de Segurança -->
+<div class="modal fade" id="modalSeguranca" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title">
+                    <i class="fas fa-hard-hat"></i> Instruções de Segurança - LEIA COM ATENÇÃO
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>ATENÇÃO:</strong> A limpeza de bocas de lobo e bueiros pode ser perigosa. Siga todas as instruções abaixo.
+                </div>
+                
+                <h6><i class="fas fa-shield-alt"></i> Equipamentos de Proteção Individual (EPIs) OBRIGATÓRIOS:</h6>
+                <ul class="mb-3">
+                    <li><strong>Luvas de borracha resistentes</strong> - Para proteger as mãos</li>
+                    <li><strong>Máscara ou respirador</strong> - Para evitar inalação de gases tóxicos</li>
+                    <li><strong>Óculos de proteção</strong> - Para proteger os olhos</li>
+                    <li><strong>Botas de borracha</strong> - Para proteger os pés</li>
+                    <li><strong>Roupas adequadas</strong> - Calça comprida e camisa de manga longa</li>
+                </ul>
+                
+                <h6><i class="fas fa-exclamation-circle"></i> Procedimentos de Segurança:</h6>
+                <ul class="mb-3">
+                    <li>Nunca trabalhe sozinho - tenha sempre alguém por perto</li>
+                    <li>Não entre em bueiros ou espaços confinados</li>
+                    <li>Cuidado com gases tóxicos - se sentir tontura, pare imediatamente</li>
+                    <li>Use ferramentas adequadas (pás, rastelos, sacos resistentes)</li>
+                    <li>Não toque diretamente no lixo com as mãos</li>
+                    <li>Lave bem as mãos e equipamentos após o trabalho</li>
+                </ul>
+                
+                <h6><i class="fas fa-phone"></i> Em caso de emergência:</h6>
+                <ul class="mb-3">
+                    <li>Bombeiros: <strong>193</strong></li>
+                    <li>SAMU: <strong>192</strong></li>
+                    <li>Se houver ferimento ou intoxicação, procure ajuda médica imediatamente</li>
+                </ul>
+                
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" id="confirmarLeitura">
+                    <label class="form-check-label" for="confirmarLeitura">
+                        <strong>Eu li e compreendi todas as instruções de segurança acima e me comprometo a seguir todos os procedimentos para realizar a limpeza de forma segura.</strong>
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form method="POST" id="formCandidatura" class="d-inline">
+                    <button type="submit" class="btn btn-success" id="btnConfirmarCandidatura" disabled>
+                        <i class="fas fa-check"></i> Confirmar Candidatura
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let problemaIdAtual = null;
+
+function mostrarModalSeguranca(problemaId) {
+    problemaIdAtual = problemaId;
+    document.getElementById('formCandidatura').action = '/candidatar-se/' + problemaId;
+    document.getElementById('confirmarLeitura').checked = false;
+    document.getElementById('btnConfirmarCandidatura').disabled = true;
+    new bootstrap.Modal(document.getElementById('modalSeguranca')).show();
+}
+
+// Habilitar botão apenas quando checkbox estiver marcado
+document.getElementById('confirmarLeitura').addEventListener('change', function() {
+    document.getElementById('btnConfirmarCandidatura').disabled = !this.checked;
+});
+</script>
+{% endblock %}

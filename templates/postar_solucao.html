@@ -1,0 +1,116 @@
+<!-- templates/postar_solucao.html -->
+{% extends "base.html" %}
+
+{% block title %}G.A.I.A. - Postar Solução{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Postar Solução</h1>
+    <a href="{{ url_for('minhas_solucoes') }}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left"></i> Voltar
+    </a>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <!-- Card com o problema original -->
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-info-circle"></i> Problema a ser Resolvido
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        {% if problema.foto_base64() %}
+                        <img src="data:image/jpeg;base64,{{ problema.foto_base64() }}" 
+                             class="img-fluid rounded" alt="Problema original">
+                        {% endif %}
+                    </div>
+                    <div class="col-md-8">
+                        <h6>
+                            <i class="fas fa-map-marker-alt text-danger"></i>
+                            {{ problema.localizacao }}
+                        </h6>
+                        <p class="mb-2">{{ problema.descricao }}</p>
+                        <small class="text-muted">
+                            <i class="fas fa-user"></i> Criado por: {{ problema.criador.nome }}
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Formulário para postar solução -->
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-camera"></i> Postar Foto da Solução
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" enctype="multipart/form-data" id="formSolucao">
+                    <div class="mb-4">
+                        <label for="foto_depois" class="form-label">
+                            <i class="fas fa-camera"></i> Foto do Problema Resolvido *
+                        </label>
+                        <input type="file" class="form-control" id="foto_depois" name="foto_depois" 
+                               accept="image/*" required>
+                        <div class="form-text">
+                            Tire uma foto mostrando que o problema foi resolvido. Formatos aceitos: JPG, PNG, GIF. Máximo: 16MB
+                        </div>
+                        
+                        <!-- Preview da imagem -->
+                        <div id="preview" class="mt-3" style="display: none;">
+                            <h6>Preview da Solução:</h6>
+                            <img id="previewImg" class="img-fluid rounded border" style="max-height: 400px;">
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Importante:</strong> Após postar a foto, o criador da solicitação original irá avaliar se o problema foi realmente resolvido. Certifique-se de que a área está completamente limpa.
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('minhas_solucoes') }}" class="btn btn-secondary me-md-2">
+                            <i class="fas fa-times"></i> Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-check"></i> Confirmar Solução
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Preview da imagem
+document.getElementById('foto_depois').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('previewImg').src = e.target.result;
+            document.getElementById('preview').style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+    }
+});
+
+// Validação do formulário
+document.getElementById('formSolucao').addEventListener('submit', function(e) {
+    const foto = document.getElementById('foto_depois').files[0];
+    if (foto && foto.size > 16 * 1024 * 1024) {
+        e.preventDefault();
+        alert('A imagem deve ter no máximo 16MB.');
+        return false;
+    }
+});
+</script>
+{% endblock %}

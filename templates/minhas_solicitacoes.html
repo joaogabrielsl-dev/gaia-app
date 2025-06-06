@@ -1,0 +1,104 @@
+<!-- templates/minhas_solicitacoes.html -->
+{% extends "base.html" %}
+
+{% block title %}G.A.I.A. - Minhas Solicitações{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Minhas Solicitações</h1>
+    <a href="{{ url_for('nova_solicitacao') }}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Nova Solicitação
+    </a>
+</div>
+
+<div class="row">
+    {% for problema in problemas %}
+    <div class="col-md-6 col-lg-4 mb-4">
+        <div class="card problema-card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                {% if problema.status == 'Aberto' %}
+                    <span class="badge bg-warning text-dark">{{ problema.status.upper() }}</span>
+                {% elif problema.status == 'Em andamento' %}
+                    <span class="badge bg-info">{{ problema.status.upper() }}</span>
+                {% else %}
+                    <span class="badge bg-success">{{ problema.status.upper() }}</span>
+                {% endif %}
+                <small class="text-muted">{{ problema.data_criacao.strftime('%d/%m/%Y') }}</small>
+            </div>
+            
+            <div class="row g-0">
+                <div class="col-4">
+                    {% if problema.foto_base64() %}
+                    <img src="data:image/jpeg;base64,{{ problema.foto_base64() }}" 
+                         class="img-fluid h-100 object-cover" alt="Problema">
+                    {% else %}
+                    <div class="bg-light h-100 d-flex align-items-center justify-content-center">
+                        <i class="fas fa-image text-muted fa-2x"></i>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="col-8">
+                    <div class="card-body p-3">
+                        <h6 class="card-title">
+                            <i class="fas fa-map-marker-alt text-danger"></i>
+                            {{ problema.localizacao }}
+                        </h6>
+                        <p class="card-text small">{{ problema.descricao[:100] }}{% if problema.descricao|length > 100 %}...{% endif %}</p>
+                        
+                        {% if problema.candidato %}
+                        <small class="text-info">
+                            <i class="fas fa-user"></i> Candidato: {{ problema.candidato.nome }}
+                        </small>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+                <div class="card-footer bg-transparent">
+                {% if problema.status == 'Aberto' %}
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small class="text-muted">
+                            <i class="fas fa-clock"></i> Aguardando candidato
+                        </small>
+                        <form method="POST" action="{{ url_for('deletar_solicitacao', problema_id=problema.id) }}" 
+                            onsubmit="return confirm('Tem certeza que deseja deletar esta solicitação?');" class="d-inline">
+                            <button type="submit" class="btn btn-outline-danger btn-sm">
+                                <i class="fas fa-trash"></i> Deletar
+                            </button>
+                        </form>
+                    </div>
+                {% elif problema.status == 'Em andamento' %}
+                    <small class="text-info">
+                        <i class="fas fa-tools"></i> Em execução por {{ problema.candidato.nome }}
+                    </small>
+                    {% if problema.solucao and not problema.solucao.aprovado %}
+                    <div class="mt-2">
+                        <a href="{{ url_for('aprovar_solucao', problema_id=problema.id) }}" 
+                        class="btn btn-success btn-sm">
+                            <i class="fas fa-check"></i> Aprovar Solução
+                        </a>
+                    </div>
+                    {% endif %}
+                {% else %}
+                    <small class="text-success">
+                        <i class="fas fa-check-circle"></i> Problema resolvido
+                    </small>
+                    <!-- Botão de deletar removido para problemas resolvidos -->
+                {% endif %}
+        </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="col-12">
+                <div class="text-center py-5">
+                    <i class="fas fa-info-circle fa-3x text-muted mb-3"></i>
+                    <h4>Você ainda não criou nenhuma solicitação</h4>
+                    <p class="text-muted">Use o botão "Nova Solicitação" para reportar um problema.</p>
+                    <a href="{{ url_for('nova_solicitacao') }}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Criar Primeira Solicitação
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endblock %}

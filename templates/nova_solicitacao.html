@@ -1,0 +1,172 @@
+<!-- templates/nova_solicitacao.html -->
+{% extends "base.html" %}
+
+{% block title %}G.A.I.A. - Nova Solicitação{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Nova Solicitação</h1>
+    <a href="{{ url_for('home') }}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left"></i> Voltar
+    </a>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="POST" enctype="multipart/form-data" id="formSolicitacao">
+                    <div class="mb-4">
+                        <label for="foto" class="form-label">
+                            <i class="fas fa-camera"></i> Foto do Problema *
+                        </label>
+                        <input type="file" class="form-control" id="foto" name="foto" 
+                               accept="image/*" required>
+                        <div class="form-text">
+                            Formatos aceitos: JPG, PNG, GIF. Máximo: 16MB
+                        </div>
+                        
+                        <!-- Preview da imagem -->
+                        <div id="preview" class="mt-3" style="display: none;">
+                            <img id="previewImg" class="img-fluid rounded" style="max-height: 300px;">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="localizacao" class="form-label">
+                            <i class="fas fa-map-marker-alt"></i> Localização *
+                        </label>
+                        <input type="text" class="form-control" id="localizacao" name="localizacao" 
+                               placeholder="Ex: Rua das Flores, 123 - Centro" required>
+                        <div class="form-text">
+                            <button type="button" class="btn btn-sm btn-outline-primary" id="btnLocalizacao">
+                                <i class="fas fa-crosshairs"></i> Usar minha localização
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Campos ocultos para coordenadas -->
+                    <input type="hidden" id="latitude" name="latitude">
+                    <input type="hidden" id="longitude" name="longitude">
+                    
+                    <div class="mb-4">
+                        <label for="descricao" class="form-label">
+                            <i class="fas fa-align-left"></i> Descrição do Problema *
+                        </label>
+                        <textarea class="form-control" id="descricao" name="descricao" rows="4" 
+                                  placeholder="Descreva o problema: tipo de entulho, gravidade, etc." required></textarea>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('home') }}" class="btn btn-secondary me-md-2">
+                            Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-paper-plane"></i> Criar Solicitação
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+<!-- Atualizar o script no template nova_solicitacao.html -->
+{% block scripts %}
+<script>
+// Preview da imagem
+document.getElementById('foto').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('previewImg').src = e.target.result;
+            document.getElementById('preview').style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+    }
+});
+
+// Geolocalização com reverse geocoding
+document.getElementById('btnLocalizacao').addEventListener('click', function() {
+    if (navigator.geolocation) {
+        this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Obtendo localização...';
+        this.disabled = true;
+        
+        navigator.geolocation.getCurrentPosition(
+            function(position) {
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
+                
+                document.getElementById('latitude').value = lat;
+                document.getElementById('longitude').value = lng;
+                
+                // Usar Nominatim (OpenStreetMap) para reverse geocoding
+                fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.display_name) {
+                            // Formatar endereço de forma mais limpa
+                            let endereco = data.display_name;
+                            
+                            // Tentar extrair partes mais relevantes
+                            if (data.address) {
+                                const addr = data.address;
+                                let partes = [];
+                                
+                                if (addr.road) partes.push(addr.road);
+                                if (addr.house_number) partes[partes.length - 1] += ', ' + addr.house_number;
+                                if (addr.neighbourhood || addr.suburb) partes.push(addr.neighbourhood || addr.suburb);
+                                if (addr.city || addr.town || addr.village) partes.push(addr.city || addr.town || addr.village);
+                                
+                                if (partes.length > 0) {
+                                    endereco = partes.join(' - ');
+                                }
+                            }
+                            
+                            document.getElementById('localizacao').value = endereco;
+                        } else {
+                            // Fallback: usar apenas coordenadas
+                            document.getElementById('localizacao').value = `Lat: ${lat.toFixed(6)}, Lng: ${lng.toFixed(6)}`;
+                        }
+                        
+                        document.getElementById('btnLocalizacao').innerHTML = 
+                            '<i class="fas fa-check"></i> Localização obtida';
+                        document.getElementById('btnLocalizacao').classList.remove('btn-outline-primary');
+                        document.getElementById('btnLocalizacao').classList.add('btn-success');
+                    })
+                    .catch(error => {
+                        console.error('Erro no reverse geocoding:', error);
+                        // Fallback: usar apenas coordenadas
+                        document.getElementById('localizacao').value = `Lat: ${lat.toFixed(6)}, Lng: ${lng.toFixed(6)}`;
+                        
+                        document.getElementById('btnLocalizacao').innerHTML = 
+                            '<i class="fas fa-check"></i> Coordenadas obtidas';
+                        document.getElementById('btnLocalizacao').classList.remove('btn-outline-primary');
+                        document.getElementById('btnLocalizacao').classList.add('btn-success');
+                    });
+            },
+            function(error) {
+                alert('Erro ao obter localização: ' + error.message);
+                document.getElementById('btnLocalizacao').innerHTML = 
+                    '<i class="fas fa-crosshairs"></i> Usar minha localização';
+                document.getElementById('btnLocalizacao').disabled = false;
+            }
+        );
+    } else {
+        alert('Geolocalização não é suportada neste navegador.');
+    }
+});
+
+// Validação do formulário
+document.getElementById('formSolicitacao').addEventListener('submit', function(e) {
+    const foto = document.getElementById('foto').files[0];
+    if (foto && foto.size > 16 * 1024 * 1024) {
+        e.preventDefault();
+        alert('A imagem deve ter no máximo 16MB.');
+        return false;
+    }
+});
+</script>
+{% endblock %}

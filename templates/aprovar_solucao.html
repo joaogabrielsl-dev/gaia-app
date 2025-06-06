@@ -1,0 +1,87 @@
+<!-- templates/aprovar_solucao.html -->
+{% extends "base.html" %}
+
+{% block title %}G.A.I.A. - Aprovar Solução{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Aprovar Solução</h1>
+    <a href="{{ url_for('minhas_solicitacoes') }}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left"></i> Voltar
+    </a>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="row">
+            <!-- Problema Original -->
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header bg-danger text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-exclamation-triangle"></i> ANTES - Problema
+                        </h5>
+                    </div>
+                    <div class="card-body text-center">
+                        {% if problema.foto_base64() %}
+                        <img src="data:image/jpeg;base64,{{ problema.foto_base64() }}" 
+                             class="img-fluid rounded" alt="Problema original">
+                        {% endif %}
+                        <div class="mt-3">
+                            <h6>
+                                <i class="fas fa-map-marker-alt"></i>
+                                {{ problema.localizacao }}
+                            </h6>
+                            <p class="small">{{ problema.descricao }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Solução Proposta -->
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-check-circle"></i> DEPOIS - Solução
+                        </h5>
+                    </div>
+                    <div class="card-body text-center">
+                        {% if problema.solucao.foto_base64() %}
+                        <img src="data:image/jpeg;base64,{{ problema.solucao.foto_base64() }}" 
+                             class="img-fluid rounded" alt="Solução proposta">
+                        {% endif %}
+                        <div class="mt-3">
+                            <small class="text-muted">
+                                <i class="fas fa-user"></i> Solucionado por: {{ problema.candidato.nome }}
+                            </small><br>
+                            <small class="text-muted">
+                                <i class="fas fa-calendar"></i> {{ problema.solucao.data_postagem.strftime('%d/%m/%Y às %H:%M') }}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Ações -->
+        <div class="card mt-4">
+            <div class="card-body text-center">
+                <h5>O problema foi realmente resolvido?</h5>
+                <p class="text-muted">Compare as duas fotos e decida se a solução está adequada.</p>
+                
+                <form method="POST" action="{{ url_for('confirmar_aprovacao', problema_id=problema.id) }}">
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                        <button type="submit" name="acao" value="aprovar" class="btn btn-success btn-lg me-md-3">
+                            <i class="fas fa-thumbs-up"></i> Aprovar Solução
+                        </button>
+                        <button type="submit" name="acao" value="rejeitar" class="btn btn-danger btn-lg">
+                            <i class="fas fa-thumbs-down"></i> Rejeitar Solução
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
