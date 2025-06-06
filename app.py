@@ -9,7 +9,6 @@ import io
 from PIL import Image
 
 app = Flask(__name__)
-app.secret_key = 'sua-chave-secreta-muito-segura-aqui-2024'
 
 # Configuração do banco de dados
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///gaia.db')
